@@ -1,0 +1,185 @@
+version: '3.9'
+
+services:
+  influxdb:
+    image: influxdb:1.8.10
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /data/influx-data:/var/lib/influxdb
+      - /home/super/docker/meatbox-docker/monitoring/init-influxdb.sh:/init-influxdb.sh
+    networks:
+      - meatbox
+    ports:
+      - 8086:8086
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 2048M
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.labels.hostname == docker-node-171
+
+  telegraf-logging:
+    image: telegraf:1.31.3
+    hostname: "{{.Node.Hostname}}"
+    environment:
+      - HOST_MOUNT_PREFIX=/hostfs
+    networks:
+      - meatbox
+    volumes:
+      - /:/hostfs:ro
+    configs:
+      - source: telegraf-logging
+        target: /etc/telegraf/telegraf.conf
+    deploy:
+      restart_policy:
+        condition: on-failure
+      mode: global
+      placement:
+        constraints: [node.role == worker]
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  telegraf:
+    image: telegraf:1.31.3
+    hostname: "{{.Node.Hostname}}"
+    environment:
+      - HOST_ETC=/hostfs/etc
+      - HOST_PROC=/hostfs/proc
+      - HOST_SYS=/hostfs/sys
+      - HOST_VAR=/hostfs/var
+      - HOST_RUN=/hostfs/run
+      - HOST_MOUNT_PREFIX=/hostfs
+      - HOST_MOUNT_PROC=/hostfs/proc/self/mountstats
+    networks:
+      - meatbox
+    volumes:
+      - /:/hostfs:ro
+      - /dev:/dev:ro
+      - /run/udev:/run/udev:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    configs:
+      - source: telegraf
+        target: /etc/telegraf/telegraf.conf
+    deploy:
+      restart_policy:
+        condition: on-failure
+      mode: global
+      placement:
+        constraints:
+          - node.labels.hostname != nginx-node-161
+          - node.labels.hostname != nginx-node-162
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 1024M
+
+
+  telegraf-161:
+    image: telegraf:1.31.3
+    hostname: "{{.Node.Hostname}}"
+    environment:
+      - HOST_ETC=/hostfs/etc
+      - HOST_PROC=/hostfs/proc
+      - HOST_SYS=/hostfs/sys
+      - HOST_VAR=/hostfs/var
+      - HOST_RUN=/hostfs/run
+      - HOST_MOUNT_PREFIX=/hostfs
+      - HOST_MOUNT_PROC=/hostfs/proc/self/mountstats
+    networks:
+      - meatbox
+    volumes:
+      - /:/hostfs:ro
+      - /dev:/dev:ro
+      - /run/udev:/run/udev:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    configs:
+      - source: telegraf-161
+        target: /etc/telegraf/telegraf.conf
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.hostname == nginx-node-161]
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 1024M
+      
+
+  telegraf-162:
+    image: telegraf:1.31.3
+    hostname: "{{.Node.Hostname}}"
+    environment:
+      - HOST_ETC=/hostfs/etc
+      - HOST_PROC=/hostfs/proc
+      - HOST_SYS=/hostfs/sys
+      - HOST_VAR=/hostfs/var
+      - HOST_RUN=/hostfs/run
+      - HOST_MOUNT_PREFIX=/hostfs
+      - HOST_MOUNT_PROC=/hostfs/proc/self/mountstats
+    networks:
+      - meatbox
+    volumes:
+      - /:/hostfs:ro
+      - /dev:/dev:ro
+      - /run/udev:/run/udev:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    configs:
+      - source: telegraf-162
+        target: /etc/telegraf/telegraf.conf
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.labels.hostname == nginx-node-162]
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 1024M
+
+networks:
+  meatbox:
+    driver: overlay
+    external: true
+
+volumes:
+  db-data:
+    driver: local
+  influx-data:
+    driver: local
+configs:
+  telegraf:
+    name: ${CONFIG_NAME}-${TIMESTAMP}
+    file: ./conf/telegraf.conf
+  telegraf-logging:
+    name: ${CONFIG_LOGGING_NAME}-${TIMESTAMP}
+    file: ./conf/telegraf-logging.conf
+  telegraf-161:
+    name: ${CONFIG_161_NAME}-${TIMESTAMP}
+    file: ./conf/telegraf-161.conf
+  telegraf-162:
+    name: ${CONFIG_162_NAME}-${TIMESTAMP}
+    file: ./conf/telegraf-162.conf
