@@ -7,7 +7,7 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - /data/influx-data:/var/lib/influxdb
-      - /home/super/docker/meatbox-docker/monitoring/init-influxdb.sh:/init-influxdb.sh
+      - ./init-influxdb.sh:/init-influxdb.sh
     networks:
       - meatbox
     ports:

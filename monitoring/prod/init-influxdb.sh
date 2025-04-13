@@ -130,3 +130,5 @@ fi
 # 메트릭 보관기간 설정
 #curl -f -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE RETENTION POLICY "one_week_only" ON "host_metrics" DURATION 1w REPLICATION 1 DEFAULT"
 #curl -f -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE RETENTION POLICY "one_week_only" ON "docker_metrics" DURATION 1w REPLICATION 1 DEFAULT"
+#curl -f -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE RETENTION POLICY "one_week_only" ON "jvm_metrics" DURATION 1w REPLICATION 1 DEFAULT"
+#curl -f -i -XPOST http://localhost:8086/query --data-urlencode "q=CREATE RETENTION POLICY "one_week_only" ON "meatbox_logs" DURATION 1w REPLICATION 1 DEFAULT"
